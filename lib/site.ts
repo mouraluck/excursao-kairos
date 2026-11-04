@@ -9,8 +9,8 @@ export const site = {
 } as const;
 
 export const nav = [
+  { label: "Próximas viagens", href: "#viagens" },
   { label: "Diferenciais", href: "#diferenciais" },
-  { label: "Roteiros", href: "#roteiros" },
   { label: "Contato", href: "#contato" },
 ] as const;
 

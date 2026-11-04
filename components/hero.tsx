@@ -117,8 +117,8 @@ export function Hero() {
               </Button>
             </span>
             <Button asChild variant="outline" size="lg">
-              <a href="#diferenciais">
-                Ver diferenciais
+              <a href="#viagens">
+                Ver próximas viagens
                 <ArrowDown />
               </a>
             </Button>

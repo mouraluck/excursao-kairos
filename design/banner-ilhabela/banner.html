@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1080px; overflow: hidden; background: #0a0a0b; }
+  .banner { position: relative; width: 1080px; height: 1080px; overflow: hidden; font-family: Inter, sans-serif; color: #fff; }
+  .photo { position: absolute; inset: 0; background: url(bg-barco-crop.jpg) center 30% / cover no-repeat; }
+  .shade { position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(10,10,11,.55) 0%, rgba(10,10,11,0) 28%, rgba(10,10,11,0) 45%, rgba(10,10,11,.82) 72%, rgba(10,10,11,.96) 100%); }
+  .top { position: absolute; top: 44px; left: 52px; right: 52px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 64px; height: 64px; border-radius: 50%; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+  .brand span { font-family: 'Clash Display', Inter, sans-serif; font-weight: 600; font-size: 28px; letter-spacing: -.01em; text-shadow: 0 2px 10px rgba(0,0,0,.5); }
+  .brand b { color: #fff101; font-weight: 600; }
+  .date { background: #fff101; color: #0a0a0b; border-radius: 999px; padding: 14px 26px; font-weight: 800; font-size: 26px; letter-spacing: .02em; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; align-items: center; gap: 12px; }
+  .date small { font-weight: 600; font-size: 18px; text-transform: uppercase; letter-spacing: .14em; opacity: .75; }
+  .hero { position: absolute; left: 52px; top: 150px; }
+  .eyebrow { display: inline-block; font-weight: 700; font-size: 20px; letter-spacing: .22em; text-transform: uppercase; color: #fff101; text-shadow: 0 2px 12px rgba(0,0,0,.6); margin-bottom: 6px; }
+  h1 { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 170px; line-height: .88; letter-spacing: -.035em; text-shadow: 0 12px 40px rgba(0,0,0,.45); }
+  .sub { margin-top: 18px; font-size: 26px; font-weight: 600; line-height: 1.3; max-width: 560px; text-shadow: 0 2px 12px rgba(0,0,0,.7); }
+  .card { position: absolute; left: 52px; right: 52px; bottom: 150px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; }
+  .box { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 28px; padding: 26px 30px; }
+  .box h3 { font-size: 17px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #fff101; margin-bottom: 14px; }
+  .dep { display: flex; flex-direction: column; gap: 10px; }
+  .dep div { display: flex; justify-content: space-between; align-items: baseline; font-size: 25px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.14); padding-bottom: 8px; }
+  .dep div:last-child { border: 0; padding-bottom: 0; }
+  .dep b { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 30px; color: #fff101; }
+  .inc { display: flex; flex-wrap: wrap; gap: 9px; }
+  .inc span { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 9px 16px; }
+  .inc span::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #fff101; flex: none; }
+  .price { margin-top: 18px; display: flex; align-items: baseline; gap: 10px; }
+  .price .from { font-size: 18px; font-weight: 600; opacity: .85; }
+  .price .val { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 56px; line-height: 1; color: #fff101; letter-spacing: -.02em; }
+  .price .per { font-size: 18px; font-weight: 600; opacity: .85; }
+  .note { font-size: 17px; opacity: .85; margin-top: 6px; line-height: 1.35; }
+  .cta { position: absolute; left: 52px; right: 52px; bottom: 44px; height: 86px; border-radius: 999px; background: #fff101; color: #0a0a0b; display: flex; align-items: center; justify-content: space-between; padding: 0 20px 0 30px; box-shadow: 0 16px 50px rgba(255,241,1,.35); }
+  .cta .l { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 30px; letter-spacing: -.01em; }
+  .cta .r { display: flex; align-items: center; gap: 12px; background: #0a0a0b; color: #fff101; border-radius: 999px; padding: 14px 24px; font-weight: 800; font-size: 26px; letter-spacing: .01em; }
+  .cta svg { width: 30px; height: 30px; fill: currentColor; }
+  .credit { position: absolute; right: 52px; bottom: 136px; font-size: 13px; opacity: .55; letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="photo"></div>
+  <div class="shade"></div>
+
+  <div class="top">
+    <div class="brand"><img src="logo.svg" alt=""><span>Excursão <b>Kairós</b></span></div>
+    <div class="date"><small>Domingo</small> 29/11</div>
+  </div>
+
+  <div class="hero">
+    <span class="eyebrow">Bate-volta de ônibus</span>
+    <h1>Ilhabela</h1>
+    <p class="sub">Um domingo inteiro de praia, com tudo organizado para você só aproveitar.</p>
+  </div>
+
+  <div class="card">
+    <div class="box">
+      <h3>Saídas na noite de sábado</h3>
+      <div class="dep">
+        <div><span>Cotia</span><b>22:30</b></div>
+        <div><span>Barra Funda</span><b>23:30</b></div>
+        <div><span>Tiradentes</span><b>23:50</b></div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>Tudo incluso</h3>
+      <div class="inc">
+        <span>Transporte ida e volta</span>
+        <span>Lanche a bordo</span>
+        <span>Água no ônibus</span>
+        <span>Sorteio de brindes</span>
+      </div>
+      <div class="price"><span class="from">por pessoa</span><span class="val">R$ 200</span></div>
+      <p class="note">Crianças de 5 a 10 anos: R$ 180 · Reserve com sinal de R$ 70</p>
+    </div>
+  </div>
+
+  <div class="credit">Foto: Ana Carolina / Unsplash</div>
+
+  <div class="cta">
+    <span class="l">Garanta sua vaga com a Analice</span>
+    <span class="r"><svg viewBox="0 0 24 24"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.39-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.91-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.8h-.01a9.8 9.8 0 0 1-5-1.37l-.36-.21-3.71.97.99-3.62-.23-.37a9.8 9.8 0 0 1-1.5-5.22c0-5.42 4.41-9.83 9.84-9.83 2.63 0 5.1 1.03 6.95 2.88a9.77 9.77 0 0 1 2.88 6.96c0 5.42-4.42 9.83-9.85 9.83zm8.38-18.2A11.8 11.8 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.9 11.9 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.18-1.24-6.17-3.5-8.42z"/></svg>(11) 99360-8627</span>
+  </div>
+</div>
+</body>
+</html>
