@@ -1,26 +1,180 @@
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap");
 @import "tailwindcss";
 
+/* Paleta extraída da logo (Canva): amarelo de fundo, grafite da tipografia,
+   dourado/areia/bronze da ampulheta. */
+/* Tema claro é o padrão (público mais velho: fundo claro, contraste alto).
+   O escuro entra com html[data-theme="dark"], pelo botão do header. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --kairos-yellow: #fff101;
+  --kairos-yellow-deep: #e3d61d;
+  --kairos-gold: #c4b65f;
+  --kairos-sand: #ddd0a8;
+  --kairos-bronze: #977551;
+  --kairos-ink: #333439;
+  --kairos-black: #0a0a0b;
+
+  --background: #fbf9f2;
+  --foreground: #17171a;
+  --muted: #4f4e48;
+  --accent: #7a5a00;
+  --border: rgba(23, 23, 26, 0.12);
+  --border-strong: rgba(23, 23, 26, 0.24);
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-hover: rgba(255, 255, 255, 0.95);
+  --surface-inset: rgba(23, 23, 26, 0.04);
+  --glass: rgba(255, 255, 255, 0.7);
+  --grid-line: rgba(23, 23, 26, 0.07);
+  --glow: rgba(255, 241, 1, 0.45);
+  --glow-2: rgba(196, 182, 95, 0.4);
+  --shadow: 0 12px 40px -18px rgba(23, 23, 26, 0.35);
+  --shimmer-a: #977551;
+  --shimmer-b: #b58a00;
+  --shimmer-c: #7a5a00;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --background: #0a0a0b;
+  --foreground: #f4f2ea;
+  --muted: #a3a197;
+  --accent: #fff101;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.09);
+  --surface-inset: rgba(0, 0, 0, 0.35);
+  --glass: rgba(255, 255, 255, 0.05);
+  --grid-line: rgba(255, 255, 255, 0.05);
+  --glow: rgba(255, 241, 1, 0.2);
+  --glow-2: rgba(151, 117, 81, 0.25);
+  --shadow: 0 10px 40px -20px rgba(0, 0, 0, 0.8);
+  --shimmer-a: #ddd0a8;
+  --shimmer-b: #fff101;
+  --shimmer-c: #c4b65f;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-inset: var(--surface-inset);
+  --color-glass: var(--glass);
+
+  --color-kairos-yellow: var(--kairos-yellow);
+  --color-kairos-yellow-deep: var(--kairos-yellow-deep);
+  --color-kairos-gold: var(--kairos-gold);
+  --color-kairos-sand: var(--kairos-sand);
+  --color-kairos-bronze: var(--kairos-bronze);
+  --color-kairos-ink: var(--kairos-ink);
+  --color-kairos-black: var(--kairos-black);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Clash Display", var(--font-inter), ui-sans-serif, sans-serif;
+
+  --animate-pulse-ring: pulse-ring 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-shimmer: shimmer 3s linear infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
   }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.glow-1 {
+  background: var(--glow);
+}
+.glow-2 {
+  background: var(--glow-2);
+}
+
+::selection {
+  background: var(--kairos-yellow);
+  color: var(--kairos-black);
+}
+
+/* Grade técnica sutil usada nos fundos */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-a) 0%,
+    var(--shimmer-b) 40%,
+    var(--shimmer-c) 60%,
+    var(--shimmer-a) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-shimmer);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
