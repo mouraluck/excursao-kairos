@@ -37,7 +37,14 @@ export function Header() {
             : "border border-transparent bg-transparent",
         )}
       >
-        <Link href="#top" className="flex items-center gap-3" aria-label={site.name}>
+        <a
+          href={site.instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3"
+          aria-label={`${site.name} no Instagram`}
+          title="Abrir o Instagram da Excursão Kairós"
+        >
           <span className="relative grid size-10 place-items-center rounded-full bg-kairos-yellow shadow-[0_0_24px_-6px_var(--kairos-yellow)]">
             <Image
               src={logoSrc}
@@ -52,7 +59,7 @@ export function Header() {
           <span className="font-display text-base font-semibold tracking-tight">
             Excursão <span className="text-accent">Kairós</span>
           </span>
-        </Link>
+        </a>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Principal">
           {nav.map((item) => (

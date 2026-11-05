@@ -7,7 +7,13 @@ export function Footer() {
     <footer className="border-t border-border bg-surface-inset">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-[1.2fr_1fr_1fr]">
         <div>
-          <div className="flex items-center gap-3">
+          <a
+            href={site.instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3"
+            aria-label={`${site.name} no Instagram`}
+          >
             <Image
               src={logoSrc}
               alt=""
@@ -22,7 +28,7 @@ export function Footer() {
               </p>
               <p className="text-sm text-muted">{site.tagline}</p>
             </div>
-          </div>
+          </a>
           <p className="mt-6 max-w-sm text-base leading-relaxed text-muted">
             Responsável: <span className="text-foreground">{site.owner}</span>.
             Excursões em grupo organizadas com cuidado, do primeiro contato ao
