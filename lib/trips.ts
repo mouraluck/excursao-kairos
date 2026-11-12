@@ -18,7 +18,13 @@ export type Trip = {
     from?: boolean;
     child?: { value: number; ages: string; note?: string };
   };
+  /** Valores por pessoa conforme o tipo de quarto. */
+  rooms?: { label: string; value: number }[];
   payment?: string;
+  /** Horários previstos de chegada e retorno. */
+  schedule?: { label: string; value: string }[];
+  itinerary?: { day: string; items: string[] }[];
+  notIncluded?: string[];
   deposit: number;
   /** Mensagem que abre no WhatsApp ao reservar esta viagem. */
   whatsappMessage: string;
@@ -93,7 +99,36 @@ export const trips: Trip[] = [
       from: true,
       child: { value: 505, ages: "5 a 12 anos", note: "acompanhadas" },
     },
-    payment: "Pix ou parcelado no cartão",
+    rooms: [
+      { label: "Casal ou duplo", value: 590 },
+      { label: "Triplo", value: 570 },
+      { label: "Quádruplo", value: 550 },
+    ],
+    payment: "Pix ou parcelado no cartão (com taxa da operadora)",
+    schedule: [
+      { label: "Chegada em São Thomé", value: "sáb. 19/12, por volta das 7h" },
+      { label: "Retorno", value: "dom. 20/12, às 16h" },
+      { label: "Chegada em São Paulo", value: "dom. 20/12, por volta das 22h30" },
+    ],
+    itinerary: [
+      {
+        day: "Sábado, 19/12",
+        items: [
+          "Chegada, check-in e café da manhã",
+          "Saída para os atrativos, com almoço no percurso",
+          "Pôr do sol e tempo livre",
+        ],
+      },
+      {
+        day: "Domingo, 20/12",
+        items: [
+          "Café da manhã",
+          "Tour pelo centro de São Thomé",
+          "Retorno para São Paulo",
+        ],
+      },
+    ],
+    notIncluded: ["Ingressos dos passeios", "Almoço"],
     deposit: 100,
     whatsappMessage:
       "Olá! Quero reservar minha vaga na viagem para São Thomé das Letras, dias 19 e 20/12.",

@@ -2,16 +2,24 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { BusFront, CalendarDays, Check, Download, MapPin } from "lucide-react";
+import {
+  BusFront,
+  CalendarDays,
+  Check,
+  Clock,
+  Download,
+  MapPin,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons";
 import { basePath, whatsappLink } from "@/lib/site";
 import { formatBRL, trips } from "@/lib/trips";
 
+// "some": cards altos aparecem assim que qualquer parte entra na tela.
 const reveal = {
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.1 },
+  viewport: { once: true, amount: "some" as const },
   transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
 };
 
@@ -37,8 +45,9 @@ export function Trips() {
             <motion.article
               key={trip.slug}
               {...reveal}
-              className="grid overflow-hidden rounded-[2rem] border border-border bg-surface shadow-(--shadow) lg:grid-cols-[1.05fr_1fr]"
+              className="overflow-hidden rounded-[2rem] border border-border bg-surface shadow-(--shadow)"
             >
+              <div className="grid lg:grid-cols-[1.05fr_1fr]">
               <div className="relative min-h-72 lg:min-h-full">
                 <Image
                   src={`${basePath}${trip.image}`}
@@ -116,16 +125,37 @@ export function Trips() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-accent/30 bg-accent/10 p-5">
-                  <div>
-                    <p className="text-sm font-medium text-muted">
-                      {trip.price.from ? "Adultos a partir de" : "Por pessoa"}
-                    </p>
-                    <p className="font-display text-4xl font-semibold text-foreground">
-                      {formatBRL(trip.price.adult)}
-                    </p>
-                  </div>
-                  <div className="text-right text-sm text-muted">
+                <div className="rounded-2xl border border-accent/30 bg-accent/10 p-5">
+                  {trip.rooms ? (
+                    <>
+                      <p className="mb-3 text-sm font-medium text-muted">
+                        Valor por pessoa, conforme o quarto
+                      </p>
+                      <ul className="divide-y divide-accent/20">
+                        {trip.rooms.map((r) => (
+                          <li
+                            key={r.label}
+                            className="flex items-baseline justify-between gap-4 py-2"
+                          >
+                            <span className="text-base">{r.label}</span>
+                            <span className="font-display text-2xl font-semibold text-foreground">
+                              {formatBRL(r.value)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-muted">
+                        {trip.price.from ? "Adultos a partir de" : "Por pessoa"}
+                      </p>
+                      <p className="font-display text-4xl font-semibold text-foreground">
+                        {formatBRL(trip.price.adult)}
+                      </p>
+                    </>
+                  )}
+                  <div className="mt-3 space-y-0.5 border-t border-accent/20 pt-3 text-sm text-muted">
                     {trip.price.child && (
                       <p>
                         Crianças de {trip.price.child.ages}
@@ -164,6 +194,52 @@ export function Trips() {
                   )}
                 </div>
               </div>
+              </div>
+
+              {(trip.itinerary || trip.schedule || trip.notIncluded) && (
+                <div className="grid gap-8 border-t border-border p-7 sm:p-9 lg:grid-cols-3">
+                  {trip.itinerary?.map((d) => (
+                    <div key={d.day}>
+                      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-accent">
+                        <CalendarDays className="size-4" /> {d.day}
+                      </h4>
+                      <ol className="space-y-2 text-base">
+                        {d.items.map((item, i) => (
+                          <li key={item} className="flex items-start gap-3">
+                            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-accent/15 text-xs font-bold text-accent">
+                              {i + 1}
+                            </span>
+                            {item}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ))}
+                  <div className="space-y-5">
+                    {trip.schedule && (
+                      <div>
+                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-accent">
+                          <Clock className="size-4" /> Horários previstos
+                        </h4>
+                        <dl className="space-y-1.5 text-base">
+                          {trip.schedule.map((sc) => (
+                            <div key={sc.label}>
+                              <dt className="text-sm text-muted">{sc.label}</dt>
+                              <dd className="font-medium">{sc.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                    )}
+                    {trip.notIncluded && (
+                      <p className="rounded-2xl border border-border bg-surface-inset px-4 py-3 text-sm text-muted">
+                        <strong className="text-foreground">Não incluso:</strong>{" "}
+                        {trip.notIncluded.join(" e ").toLowerCase()}.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.article>
           ))}
         </div>
