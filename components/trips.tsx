@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { BusFront, CalendarDays, Check, Download, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons";
-import { basePath, site } from "@/lib/site";
+import { basePath, whatsappLink } from "@/lib/site";
 import { formatBRL, trips } from "@/lib/trips";
 
 const reveal = {
@@ -57,7 +57,7 @@ export function Trips() {
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-kairos-yellow">
                     {trip.kind}
                   </p>
-                  <h3 className="font-display text-5xl font-semibold tracking-[-0.03em] sm:text-6xl">
+                  <h3 className="font-display text-4xl font-semibold leading-[0.95] tracking-[-0.03em] sm:text-5xl">
                     {trip.destination}
                   </h3>
                 </div>
@@ -78,6 +78,11 @@ export function Trips() {
                   <div>
                     <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-accent">
                       <BusFront className="size-4" /> Saídas
+                      {trip.departureNote && (
+                        <span className="normal-case tracking-normal text-muted">
+                          · {trip.departureNote}
+                        </span>
+                      )}
                     </h4>
                     <ul className="divide-y divide-border rounded-2xl border border-border bg-surface-inset">
                       {trip.departures.map((d) => (
@@ -113,7 +118,9 @@ export function Trips() {
 
                 <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-accent/30 bg-accent/10 p-5">
                   <div>
-                    <p className="text-sm font-medium text-muted">Por pessoa</p>
+                    <p className="text-sm font-medium text-muted">
+                      {trip.price.from ? "Adultos a partir de" : "Por pessoa"}
+                    </p>
                     <p className="font-display text-4xl font-semibold text-foreground">
                       {formatBRL(trip.price.adult)}
                     </p>
@@ -121,12 +128,14 @@ export function Trips() {
                   <div className="text-right text-sm text-muted">
                     {trip.price.child && (
                       <p>
-                        Crianças de {trip.price.child.ages}:{" "}
+                        Crianças de {trip.price.child.ages}
+                        {trip.price.child.note && ` ${trip.price.child.note}`}:{" "}
                         <strong className="text-foreground">
                           {formatBRL(trip.price.child.value)}
                         </strong>
                       </p>
                     )}
+                    {trip.payment && <p>{trip.payment}</p>}
                     <p>
                       Reserva com sinal de{" "}
                       <strong className="text-foreground">{formatBRL(trip.deposit)}</strong>
@@ -136,7 +145,11 @@ export function Trips() {
 
                 <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center">
                   <Button asChild size="lg" className="w-full sm:w-auto">
-                    <a href={site.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={whatsappLink(trip.whatsappMessage)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <WhatsAppIcon className="!size-5" />
                       Reservar minha vaga
                     </a>

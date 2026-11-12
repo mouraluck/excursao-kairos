@@ -8,6 +8,13 @@ export const site = {
   instagramHandle: "@excursoeskairos",
 } as const;
 
+const whatsappNumber = "5511993608627";
+
+/** Link do WhatsApp com uma mensagem própria (usado nas reservas de cada viagem). */
+export function whatsappLink(message: string) {
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
 export const nav = [
   { label: "Próximas viagens", href: "#viagens" },
   { label: "Diferenciais", href: "#diferenciais" },

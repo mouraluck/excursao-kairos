@@ -8,10 +8,20 @@ export type Trip = {
   image: string;
   imageAlt: string;
   credit: { name: string; url: string };
+  /** Texto acima das saídas quando o embarque é em outro dia. */
+  departureNote?: string;
   departures: { place: string; time: string }[];
   included: string[];
-  price: { adult: number; child?: { value: number; ages: string } };
+  price: {
+    adult: number;
+    /** true quando o valor do adulto é "a partir de". */
+    from?: boolean;
+    child?: { value: number; ages: string; note?: string };
+  };
+  payment?: string;
   deposit: number;
+  /** Mensagem que abre no WhatsApp ao reservar esta viagem. */
+  whatsappMessage: string;
   banner?: string;
 };
 
@@ -43,7 +53,51 @@ export const trips: Trip[] = [
     ],
     price: { adult: 200, child: { value: 180, ages: "5 a 10 anos" } },
     deposit: 70,
+    whatsappMessage:
+      "Olá! Quero reservar minha vaga na viagem para Ilhabela, domingo 29/11.",
     banner: "/viagens/ilhabela-29-11.png",
+  },
+  {
+    slug: "sao-thome-das-letras-19-20-12",
+    destination: "São Thomé das Letras",
+    kind: "Fim de semana com hospedagem",
+    date: "19 e 20/12",
+    weekday: "Sábado e domingo",
+    summary:
+      "Dois dias entre cachoeiras, mirantes e ruas de pedra na cidade mística de Minas, com hospedagem, guia local e transfer para os atrativos.",
+    image: "/viagens/sao-thome.jpg",
+    imageAlt:
+      "Casas de pedra e rua de pedra são-tomé no centro de São Thomé das Letras",
+    credit: {
+      name: "Lucas Pezeta / Pexels",
+      url: "https://www.pexels.com/photo/2353120/",
+    },
+    departureNote: "Sexta, 18/12",
+    departures: [
+      { place: "Cotia", time: "22:00" },
+      { place: "Barra Funda", time: "23:00" },
+      { place: "Tiradentes", time: "23:30" },
+    ],
+    included: [
+      "Ônibus executivo",
+      "Hospedagem (1 noite)",
+      "2 cafés da manhã",
+      "Guia local",
+      "Transfer para os atrativos",
+      "Seguro viagem",
+      "Lanche na ida",
+      "Sorteio na volta",
+    ],
+    price: {
+      adult: 550,
+      from: true,
+      child: { value: 505, ages: "5 a 12 anos", note: "acompanhadas" },
+    },
+    payment: "Pix ou parcelado no cartão",
+    deposit: 100,
+    whatsappMessage:
+      "Olá! Quero reservar minha vaga na viagem para São Thomé das Letras, dias 19 e 20/12.",
+    banner: "/viagens/sao-thome-19-20-12.png",
   },
 ];
 
