@@ -178,3 +178,14 @@ body {
     scroll-behavior: auto;
   }
 }
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
