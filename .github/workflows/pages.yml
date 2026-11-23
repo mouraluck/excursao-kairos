@@ -24,6 +24,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Migrações dos dados do painel: se falharem, o site não é publicado.
+      - run: npm test
       - run: npm run build
         env:
           GITHUB_PAGES: "true"

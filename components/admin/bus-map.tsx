@@ -1,7 +1,7 @@
 "use client";
 
 import { DoorOpen } from "lucide-react";
-import { type AdminTrip, SEAT_COUNT } from "@/lib/admin/store";
+import { SEAT_COUNT } from "@/lib/admin/schema";
 import { cn } from "@/lib/utils";
 
 // Ônibus executivo de 46 lugares: 11 fileiras de 4 e a última com 2 ao lado
@@ -14,16 +14,16 @@ function firstName(name: string) {
 
 function Seat({
   seat,
-  trip,
+  names,
   selected,
   onSelect,
 }: {
   seat: number;
-  trip: AdminTrip;
+  names: Record<number, string>;
   selected: boolean;
   onSelect: (seat: number) => void;
 }) {
-  const passenger = trip.passengers[seat];
+  const passenger = names[seat];
   return (
     <button
       type="button"
@@ -31,10 +31,10 @@ function Seat({
       aria-pressed={selected}
       aria-label={
         passenger
-          ? `Poltrona ${seat}, ocupada por ${passenger.name}`
+          ? `Poltrona ${seat}, ocupada por ${passenger}`
           : `Poltrona ${seat}, disponível`
       }
-      title={passenger ? `${seat} · ${passenger.name}` : `${seat} · disponível`}
+      title={passenger ? `${seat} · ${passenger}` : `${seat} · disponível`}
       className={cn(
         "relative flex h-14 w-12 flex-col items-center justify-center rounded-t-2xl rounded-b-lg border-2 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-foreground/40 sm:h-16 sm:w-14",
         passenger
@@ -49,7 +49,7 @@ function Seat({
       </span>
       {passenger && (
         <span className="mt-0.5 w-full truncate px-0.5 text-[9px] font-medium leading-tight sm:text-[10px]">
-          {firstName(passenger.name)}
+          {firstName(passenger)}
         </span>
       )}
     </button>
@@ -57,18 +57,19 @@ function Seat({
 }
 
 export function BusMap({
-  trip,
+  names,
   selectedSeat,
   onSelect,
 }: {
-  trip: AdminTrip;
+  /** Poltrona -> nome de quem está nela. */
+  names: Record<number, string>;
   selectedSeat: number | null;
   onSelect: (seat: number) => void;
 }) {
   const rows = Array.from({ length: FULL_ROWS }, (_, i) => i + 1);
   const seatProps = (seat: number) => ({
     seat,
-    trip,
+    names,
     selected: selectedSeat === seat,
     onSelect,
   });

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Código de terceiros copiado da Easy UI (MIT): mantido próximo do original.
+    "components/easyui/**",
+    "lib/motion-tokens.ts",
   ]),
 ]);
 

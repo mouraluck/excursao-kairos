@@ -3,43 +3,49 @@
 import Image from "next/image";
 import { type FormEvent, useRef, useState } from "react";
 import {
-  ArrowLeft,
   BusFront,
   Download,
   LockKeyhole,
   LogOut,
   Plus,
-  Printer,
   Trash2,
   Upload,
+  Users,
 } from "lucide-react";
-import { BusMap } from "@/components/admin/bus-map";
-import { PassengerForm } from "@/components/admin/passenger-form";
-import { Button } from "@/components/ui/button";
+import { PeoplePage } from "@/components/admin/people-page";
+import { TripView } from "@/components/admin/trip-view";
+import { Button, Input, Notice } from "@/components/admin/ui";
+import { AnimatedTabs } from "@/components/easyui/animated-tabs";
+import { UndoToast } from "@/components/easyui/undo-toast";
 import { deriveDataKey, deriveVerifier } from "@/lib/admin/crypto";
 import {
-  type AdminTrip,
-  type Passenger,
+  type AdminData,
+  CURRENT_SCHEMA,
   SEAT_COUNT,
-  freeSeats,
-  loadTrips,
+  emptyData,
   occupiedCount,
-  parseBackup,
-  saveTrips,
-} from "@/lib/admin/store";
+} from "@/lib/admin/schema";
+import { env, loadData, parseBackup, saveData } from "@/lib/admin/store";
 import { logoSrc, site } from "@/lib/site";
 
 const VERIFIER = process.env.NEXT_PUBLIC_ADMIN_VERIFIER ?? "";
 
-const inputClass =
-  "h-12 w-full rounded-xl border-2 border-border-strong bg-background px-4 text-lg text-foreground outline-none transition-colors placeholder:text-muted/60 focus:border-foreground";
+// Em nenhum destes casos o painel escreve por cima do que está salvo.
+const LOAD_ERRORS = {
+  undecryptable:
+    "Há dados neste navegador salvos com outra senha. Entre com a senha antiga para exportar o backup antes de trocar.",
+  newer:
+    "Os dados deste navegador foram salvos por uma versão mais nova do painel. Recarregue a página para atualizar e tente de novo.",
+  invalid:
+    "Os dados salvos neste navegador não puderam ser lidos. Nada foi alterado. Importe um backup ou fale com o suporte.",
+} as const;
 
 /* ------------------------------- Login ------------------------------- */
 
 function Login({
   onLogin,
 }: {
-  onLogin: (key: CryptoKey, trips: AdminTrip[]) => void;
+  onLogin: (key: CryptoKey, data: AdminData, migratedFrom?: number) => void;
 }) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -57,14 +63,12 @@ function Login({
         return;
       }
       const key = await deriveDataKey(login, password);
-      const result = await loadTrips(key);
+      const result = await loadData(key);
       if (!result.ok) {
-        setError(
-          "Há dados neste navegador salvos com outra senha. Entre com a senha antiga para exportar o backup antes de trocar.",
-        );
+        setError(LOAD_ERRORS[result.reason]);
         return;
       }
-      onLogin(key, result.trips);
+      onLogin(key, result.data, result.migratedFrom);
     } catch {
       setError("Não foi possível entrar neste navegador.");
     } finally {
@@ -103,34 +107,31 @@ function Login({
           <form onSubmit={submit} className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-semibold">Login</span>
-              <input
+              <Input
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 autoComplete="username"
                 autoCapitalize="none"
                 required
-                className={inputClass}
               />
             </label>
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-semibold">Senha</span>
-              <input
+              <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                showPasswordToggle
                 required
-                className={inputClass}
               />
             </label>
             {error && (
-              <p role="alert" className="text-sm font-medium text-red-600">
-                {error}
-              </p>
+              <Notice tone="danger">{error}</Notice>
             )}
-            <Button type="submit" size="lg" disabled={busy} className="w-full">
+            <Button type="submit" size="lg" isLoading={busy} loadingText="Entrando..." className="w-full">
               <LockKeyhole />
-              {busy ? "Entrando..." : "Entrar"}
+              Entrar
             </Button>
           </form>
         )}
@@ -139,241 +140,39 @@ function Login({
   );
 }
 
-/* ---------------------------- Lista impressa ---------------------------- */
-
-function PrintSheet({ trip }: { trip: AdminTrip }) {
-  const rows = Object.entries(trip.passengers)
-    .map(([seat, p]) => ({ seat: Number(seat), ...p }))
-    .sort((a, b) => a.seat - b.seat);
-
-  return (
-    <div className="hidden bg-white p-0 text-black print:block">
-      <header className="mb-4 flex items-end justify-between border-b-2 border-black pb-3">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-widest">
-            {site.name} · Lista de passageiros
-          </p>
-          <h1 className="text-3xl font-bold">{trip.name}</h1>
-        </div>
-        <p className="text-right text-sm">
-          {rows.length} de {SEAT_COUNT} poltronas ocupadas
-          <br />
-          Responsável: {site.owner}
-        </p>
-      </header>
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b-2 border-black text-left">
-            <th className="w-12 py-1.5 pr-2">Polt.</th>
-            <th className="py-1.5 pr-2">Nome</th>
-            <th className="py-1.5 pr-2">Documento</th>
-            <th className="py-1.5 pr-2">Telefone</th>
-            <th className="py-1.5 pr-2">Embarque</th>
-            <th className="w-16 py-1.5 text-center">Presença</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.seat} className="break-inside-avoid border-b border-black/30">
-              <td className="py-1.5 pr-2 font-bold">{r.seat}</td>
-              <td className="py-1.5 pr-2">{r.name}</td>
-              <td className="py-1.5 pr-2">{r.document}</td>
-              <td className="py-1.5 pr-2">{r.phone}</td>
-              <td className="py-1.5 pr-2">{r.boarding}</td>
-              <td className="py-1.5 text-center">
-                <span className="inline-block size-4 border border-black" />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {rows.length === 0 && <p className="mt-4">Nenhum passageiro cadastrado.</p>}
-    </div>
-  );
-}
-
-/* ------------------------------ Uma viagem ------------------------------ */
-
-function TripView({
-  trip,
-  onChange,
-  onBack,
-}: {
-  trip: AdminTrip;
-  onChange: (trip: AdminTrip) => void;
-  onBack: () => void;
-}) {
-  const [seat, setSeat] = useState<number | null>(null);
-  const occupied = occupiedCount(trip);
-  const free = freeSeats(trip);
-  const list = Object.entries(trip.passengers)
-    .map(([s, p]) => ({ seat: Number(s), ...p }))
-    .sort((a, b) => a.seat - b.seat);
-
-  function save(data: Passenger, opts: { seat: number; next: boolean }) {
-    if (seat === null) return;
-    const passengers = { ...trip.passengers };
-    delete passengers[seat];
-    passengers[opts.seat] = data;
-    onChange({ ...trip, passengers });
-    if (opts.next) {
-      const nextFree = free.find((s) => s !== seat && s !== opts.seat && s > seat);
-      setSeat(nextFree ?? free.find((s) => s !== seat && s !== opts.seat) ?? null);
-    } else {
-      setSeat(null);
-    }
-  }
-
-  function remove() {
-    if (seat === null) return;
-    const p = trip.passengers[seat];
-    if (!p || !window.confirm(`Liberar a poltrona ${seat} de ${p.name}?`)) return;
-    const passengers = { ...trip.passengers };
-    delete passengers[seat];
-    onChange({ ...trip, passengers });
-    setSeat(null);
-  }
-
-  return (
-    <>
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 print:hidden">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" onClick={onBack} aria-label="Voltar às viagens">
-              <ArrowLeft />
-            </Button>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">
-                Viagem
-              </p>
-              <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl">
-                {trip.name}
-              </h1>
-            </div>
-          </div>
-          <Button onClick={() => window.print()} size="lg" variant="outline">
-            <Printer />
-            Imprimir lista
-          </Button>
-        </div>
-
-        <div className="mb-8 grid grid-cols-3 gap-3 sm:max-w-xl">
-          <div className="rounded-2xl border border-border bg-surface p-4">
-            <p className="text-sm text-muted">Ocupadas</p>
-            <p className="font-display text-3xl font-semibold">{occupied}</p>
-          </div>
-          <div className="rounded-2xl border border-kairos-yellow-deep bg-kairos-yellow p-4 text-kairos-black">
-            <p className="text-sm">Disponíveis</p>
-            <p className="font-display text-3xl font-semibold">{free.length}</p>
-          </div>
-          <div className="rounded-2xl border border-border bg-surface p-4">
-            <p className="text-sm text-muted">Total</p>
-            <p className="font-display text-3xl font-semibold">{SEAT_COUNT}</p>
-          </div>
-        </div>
-
-        <div className="grid items-start gap-8 lg:grid-cols-[auto_minmax(0,1fr)]">
-          <div className="min-w-0">
-            <p className="mb-3 text-center text-base text-muted lg:text-left">
-              Toque em uma poltrona para cadastrar ou editar.
-            </p>
-            <BusMap trip={trip} selectedSeat={seat} onSelect={setSeat} />
-          </div>
-
-          <div className="min-w-0 lg:sticky lg:top-6">
-            {seat !== null ? (
-              <>
-                {/* No celular o formulário sobe como uma folha por cima do mapa. */}
-                <div
-                  className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-                  onClick={() => setSeat(null)}
-                  aria-hidden
-                />
-                <div className="fixed inset-x-0 bottom-0 z-50 max-h-[92svh] overflow-y-auto rounded-t-[2rem] border border-border bg-background p-6 shadow-2xl lg:static lg:max-h-none lg:rounded-[2rem] lg:bg-surface lg:p-7 lg:shadow-(--shadow)">
-                  <PassengerForm
-                    key={seat}
-                    seat={seat}
-                    passenger={trip.passengers[seat]}
-                    freeSeats={free}
-                    onSave={save}
-                    onRemove={remove}
-                    onClose={() => setSeat(null)}
-                  />
-                </div>
-              </>
-            ) : null}
-
-            <div className={seat !== null ? "lg:hidden" : undefined}>
-              <h2 className="mb-3 font-display text-2xl font-semibold">
-                Passageiros ({occupied})
-              </h2>
-              {list.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-border-strong p-6 text-base text-muted">
-                  Nenhum passageiro ainda. Toque em uma poltrona amarela para começar.
-                </p>
-              ) : (
-                <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
-                  {list.map((p) => (
-                    <li key={p.seat}>
-                      <button
-                        type="button"
-                        onClick={() => setSeat(p.seat)}
-                        className="flex w-full items-center gap-4 px-4 py-3 text-left hover:bg-surface-hover"
-                      >
-                        <span className="grid size-11 shrink-0 place-items-center rounded-t-xl rounded-b-md border-2 border-zinc-500 bg-zinc-400 font-display text-lg font-semibold text-white">
-                          {p.seat}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-lg font-medium">{p.name}</span>
-                          <span className="block truncate text-sm text-muted">
-                            {[p.boarding, p.phone, p.document].filter(Boolean).join(" · ") ||
-                              "Sem dados adicionais"}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      <PrintSheet trip={trip} />
-    </>
-  );
-}
-
 /* --------------------------- Lista de viagens --------------------------- */
 
 function TripList({
-  trips,
+  data,
+  notice,
   onOpen,
-  onAdd,
-  onDelete,
-  onImport,
-  onLogout,
+  onChange,
 }: {
-  trips: AdminTrip[];
+  data: AdminData;
+  notice: string;
   onOpen: (id: string) => void;
-  onAdd: (name: string) => void;
-  onDelete: (id: string) => void;
-  onImport: (trips: AdminTrip[]) => void;
-  onLogout: () => void;
+  onChange: OnChange;
 }) {
   const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(notice);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { trips } = data;
 
   function add(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    onAdd(name.trim());
+    onChange({
+      ...data,
+      trips: [
+        ...trips,
+        { id: env.newId(), name: name.trim(), createdAt: env.now(), seats: {} },
+      ],
+    });
     setName("");
   }
 
   function exportBackup() {
-    const blob = new Blob([JSON.stringify(trips, null, 2)], {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json",
     });
     const a = document.createElement("a");
@@ -389,44 +188,35 @@ function TripList({
       setMessage("Esse arquivo não é um backup válido do painel.");
       return;
     }
+    const has = trips.length > 0 || data.people.length > 0;
     if (
-      trips.length > 0 &&
+      has &&
       !window.confirm(
-        `Substituir as ${trips.length} viagens deste navegador pelas ${parsed.length} do backup?`,
+        `Substituir tudo o que está neste navegador (${trips.length} viagens, ${data.people.length} passageiros) pelo backup (${parsed.trips.length} viagens, ${parsed.people.length} passageiros)?`,
       )
     ) {
       return;
     }
-    onImport(parsed);
-    setMessage(`Backup importado: ${parsed.length} viagens.`);
+    onChange(parsed);
+    setMessage(
+      `Backup importado: ${parsed.trips.length} viagens e ${parsed.people.length} passageiros.`,
+    );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Image
-            src={logoSrc}
-            alt=""
-            width={52}
-            height={52}
-            unoptimized
-            className="size-13 rounded-full"
-          />
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">
-              Painel
-            </p>
-            <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl">
-              Viagens
-            </h1>
-          </div>
-        </div>
-        <Button variant="outline" onClick={onLogout}>
-          <LogOut />
-          Sair
-        </Button>
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mb-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">
+          Painel
+        </p>
+        <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl">
+          Viagens
+        </h1>
       </div>
+
+      {message && (
+        <Notice tone="info" className="mb-6">{message}</Notice>
+      )}
 
       <form
         onSubmit={add}
@@ -434,11 +224,10 @@ function TripList({
       >
         <label className="flex flex-1 flex-col gap-1.5">
           <span className="text-sm font-semibold">Nome da nova viagem</span>
-          <input
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex.: Ilhabela 29/11"
-            className={inputClass}
           />
         </label>
         <Button type="submit" size="lg" className="h-12" disabled={!name.trim()}>
@@ -470,13 +259,13 @@ function TripList({
                     aria-label={`Excluir a viagem ${trip.name}`}
                     className="shrink-0 text-muted hover:text-red-600"
                     onClick={() => {
-                      if (
-                        window.confirm(
-                          `Excluir a viagem "${trip.name}" e seus ${occupied} passageiros? Isso não pode ser desfeito.`,
-                        )
-                      ) {
-                        onDelete(trip.id);
-                      }
+                      onChange(
+                        { ...data, trips: trips.filter((t) => t.id !== trip.id) },
+                        {
+                          title: `Viagem "${trip.name}" excluída`,
+                          description: "Os passageiros continuam no cadastro.",
+                        },
+                      );
                     }}
                   >
                     <Trash2 />
@@ -508,13 +297,18 @@ function TripList({
       )}
 
       <div className="mt-10 rounded-2xl border border-border bg-surface-inset p-5">
-        <h2 className="mb-1 text-base font-semibold">Backup</h2>
+        <h2 className="mb-1 text-base font-semibold">Backup completo</h2>
         <p className="mb-4 text-sm text-muted">
-          Os dados ficam guardados só neste navegador, protegidos pela senha.
-          Exporte um backup de vez em quando e para levar a outro aparelho.
+          Viagens e passageiros ficam guardados só neste navegador, protegidos
+          pela senha. Atualizações do site não apagam esses dados. Exporte um
+          backup de vez em quando e para levar a outro aparelho.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={exportBackup} disabled={trips.length === 0}>
+          <Button
+            variant="outline"
+            onClick={exportBackup}
+            disabled={trips.length === 0 && data.people.length === 0}
+          >
             <Download />
             Exportar backup
           </Button>
@@ -534,7 +328,9 @@ function TripList({
             }}
           />
         </div>
-        {message && <p className="mt-3 text-sm font-medium">{message}</p>}
+        <p className="mt-4 text-xs text-muted">
+          Formato dos dados: versão {CURRENT_SCHEMA}
+        </p>
       </div>
     </div>
   );
@@ -542,61 +338,130 @@ function TripList({
 
 /* -------------------------------- Painel -------------------------------- */
 
+type Page = "trips" | "people";
+
+type UndoInfo = { title: string; description?: string };
+
+/** Grava os dados. Com `undo`, mostra um aviso com o botão Desfazer. */
+export type OnChange = (data: AdminData, undo?: UndoInfo) => void;
+
 export function AdminApp() {
   const [key, setKey] = useState<CryptoKey | null>(null);
-  const [trips, setTrips] = useState<AdminTrip[]>([]);
+  const [data, setData] = useState<AdminData>(emptyData);
+  const [page, setPage] = useState<Page>("trips");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
-  function commit(next: AdminTrip[]) {
-    setTrips(next);
-    if (key) void saveTrips(key, next);
+  const [undo, setUndo] = useState<(UndoInfo & { id: number; prev: AdminData }) | null>(null);
+
+  function persist(next: AdminData) {
+    setData(next);
+    if (key) void saveData(key, next);
   }
+
+  // Desfazer volta ao estado de antes da ação; qualquer mudança posterior o descarta.
+  const commit: OnChange = (next, info) => {
+    setUndo(info ? { ...info, id: Date.now(), prev: data } : null);
+    persist(next);
+  };
 
   if (!key) {
     return (
       <Login
-        onLogin={(k, loaded) => {
+        onLogin={(k, loaded, migratedFrom) => {
           setKey(k);
-          setTrips(loaded);
+          setData(loaded);
+          setNotice(
+            migratedFrom
+              ? "O painel foi atualizado e seus dados foram convertidos para a nova versão. Nada foi perdido: os passageiros de cada viagem agora também aparecem na aba Passageiros."
+              : "",
+          );
         }}
       />
     );
   }
 
-  const open = trips.find((t) => t.id === openId);
+  const open = page === "trips" ? data.trips.find((t) => t.id === openId) : undefined;
 
-  if (open) {
-    return (
-      <TripView
-        trip={open}
-        onBack={() => setOpenId(null)}
-        onChange={(trip) => commit(trips.map((t) => (t.id === trip.id ? trip : t)))}
-      />
-    );
-  }
+  const tabs: { id: Page; label: string; icon: typeof BusFront }[] = [
+    { id: "trips", label: "Viagens", icon: BusFront },
+    { id: "people", label: "Passageiros", icon: Users },
+  ];
 
   return (
-    <TripList
-      trips={trips}
-      onOpen={setOpenId}
-      onAdd={(name) =>
-        commit([
-          ...trips,
-          {
-            id: crypto.randomUUID(),
-            name,
-            createdAt: new Date().toISOString(),
-            passengers: {},
-          },
-        ])
-      }
-      onDelete={(id) => commit(trips.filter((t) => t.id !== id))}
-      onImport={commit}
-      onLogout={() => {
-        setKey(null);
-        setTrips([]);
-        setOpenId(null);
-      }}
-    />
+    <>
+      <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur print:hidden">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Image
+              src={logoSrc}
+              alt={site.name}
+              width={40}
+              height={40}
+              unoptimized
+              className="size-10 shrink-0 rounded-full"
+            />
+            <AnimatedTabs
+              variant="pill"
+              renderContent={false}
+              activeTab={page}
+              onChange={(id) => {
+                setPage(id as Page);
+                setOpenId(null);
+              }}
+              tabs={tabs.map((tab) => ({
+                id: tab.id,
+                label: tab.label,
+                icon: <tab.icon className="size-4" />,
+              }))}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setKey(null);
+              setUndo(null);
+              setData(emptyData());
+              setOpenId(null);
+              setPage("trips");
+            }}
+          >
+            <LogOut />
+            Sair
+          </Button>
+        </div>
+      </header>
+
+      {page === "people" ? (
+        <PeoplePage data={data} onChange={commit} />
+      ) : open ? (
+        <TripView
+          data={data}
+          trip={open}
+          onChange={commit}
+          onBack={() => setOpenId(null)}
+        />
+      ) : (
+        <TripList data={data} notice={notice} onOpen={setOpenId} onChange={commit} />
+      )}
+
+      {undo && (
+        <div className="print:hidden">
+          <UndoToast
+            key={undo.id}
+            open
+            title={undo.title}
+            description={undo.description}
+            undoLabel="Desfazer"
+            restoredMessage="Restaurado"
+            duration={8000}
+            position="bottom-center"
+            onUndo={() => persist(undo.prev)}
+            onDismiss={() => setUndo(null)}
+          />
+        </div>
+      )}
+    </>
   );
 }

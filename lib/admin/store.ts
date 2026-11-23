@@ -1,91 +1,71 @@
 import { decryptJson, encryptJson } from "@/lib/admin/crypto";
+import {
+  type AdminData,
+  InvalidDataError,
+  NewerSchemaError,
+  migrate,
+} from "@/lib/admin/schema";
 
-export const SEAT_COUNT = 46;
+// O nome da chave não muda nunca: trocar deixaria os dados antigos órfãos.
+// A versão do formato vai dentro do conteúdo (campo `schema`).
 const STORAGE_KEY = "kairos-admin-data-v1";
+const SNAPSHOT_PREFIX = "kairos-admin-snapshot-schema-";
 
-export type Passenger = {
-  name: string;
-  document: string;
-  phone: string;
-  boarding: string;
-};
-
-export type AdminTrip = {
-  id: string;
-  name: string;
-  createdAt: string;
-  /** Poltrona (1 a 46) -> passageiro. */
-  passengers: Record<number, Passenger>;
+export const env = {
+  newId: () => crypto.randomUUID(),
+  now: () => new Date().toISOString(),
 };
 
 export type LoadResult =
-  | { ok: true; trips: AdminTrip[] }
-  | { ok: false; reason: "undecryptable" };
+  | { ok: true; data: AdminData; migratedFrom?: number }
+  | { ok: false; reason: "undecryptable" | "newer" | "invalid" };
 
-/** Lê as viagens deste navegador. Vazio se nunca houve dados. */
-export async function loadTrips(key: CryptoKey): Promise<LoadResult> {
+/**
+ * Lê os dados deste navegador e, se vieram de uma versão anterior do site,
+ * converte para o formato atual. Antes de regravar, guarda uma cópia intacta
+ * do que havia. Em qualquer falha, não escreve nada.
+ */
+export async function loadData(key: CryptoKey): Promise<LoadResult> {
   let stored: string | null = null;
   try {
     stored = localStorage.getItem(STORAGE_KEY);
   } catch {
-    return { ok: true, trips: [] };
+    stored = null;
   }
-  if (!stored) return { ok: true, trips: [] };
-  try {
-    return { ok: true, trips: await decryptJson<AdminTrip[]>(key, stored) };
-  } catch {
-    // Dados gravados com outra senha: não sobrescrever.
-    return { ok: false, reason: "undecryptable" };
-  }
-}
-
-export async function saveTrips(key: CryptoKey, trips: AdminTrip[]) {
-  localStorage.setItem(STORAGE_KEY, await encryptJson(key, trips));
-}
-
-export function occupiedCount(trip: AdminTrip) {
-  return Object.keys(trip.passengers).length;
-}
-
-export function freeSeats(trip: AdminTrip) {
-  const free: number[] = [];
-  for (let seat = 1; seat <= SEAT_COUNT; seat++) {
-    if (!trip.passengers[seat]) free.push(seat);
-  }
-  return free;
-}
-
-/** Valida um backup importado antes de aceitar. */
-export function parseBackup(text: string): AdminTrip[] | null {
-  try {
-    const data = JSON.parse(text) as unknown;
-    if (!Array.isArray(data)) return null;
-    const trips: AdminTrip[] = [];
-    for (const item of data) {
-      if (!item || typeof item.id !== "string" || typeof item.name !== "string") {
-        return null;
-      }
-      const passengers: Record<number, Passenger> = {};
-      for (const [seat, p] of Object.entries(item.passengers ?? {})) {
-        const n = Number(seat);
-        const pax = p as Partial<Passenger>;
-        if (!Number.isInteger(n) || n < 1 || n > SEAT_COUNT) return null;
-        if (typeof pax?.name !== "string") return null;
-        passengers[n] = {
-          name: pax.name,
-          document: String(pax.document ?? ""),
-          phone: String(pax.phone ?? ""),
-          boarding: String(pax.boarding ?? ""),
-        };
-      }
-      trips.push({
-        id: item.id,
-        name: item.name,
-        createdAt: String(item.createdAt ?? new Date().toISOString()),
-        passengers,
-      });
+  let raw: unknown = null;
+  if (stored) {
+    try {
+      raw = await decryptJson<unknown>(key, stored);
+    } catch {
+      return { ok: false, reason: "undecryptable" };
     }
-    return trips;
+  }
+  try {
+    const { data, from } = migrate(raw, env);
+    if (stored && from !== data.schema) {
+      const snapshotKey = `${SNAPSHOT_PREFIX}${from}`;
+      if (!localStorage.getItem(snapshotKey)) {
+        localStorage.setItem(snapshotKey, stored);
+      }
+      await saveData(key, data);
+      return { ok: true, data, migratedFrom: from };
+    }
+    return { ok: true, data };
+  } catch (error) {
+    if (error instanceof NewerSchemaError) return { ok: false, reason: "newer" };
+    if (error instanceof InvalidDataError) return { ok: false, reason: "invalid" };
+    throw error;
+  }
+}
+
+export async function saveData(key: CryptoKey, data: AdminData) {
+  localStorage.setItem(STORAGE_KEY, await encryptJson(key, data));
+}
+
+/** Aceita backup de qualquer versão já publicada. */
+export function parseBackup(text: string): AdminData | null {
+  try {
+    return migrate(JSON.parse(text) as unknown, env).data;
   } catch {
     return null;
   }

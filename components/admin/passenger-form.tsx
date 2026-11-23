@@ -1,51 +1,82 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-import { ArrowRight, Check, Trash2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { Passenger } from "@/lib/admin/store";
+import { type FormEvent, useMemo, useRef, useState } from "react";
+import { ArrowRight, Check, Trash2, UserCheck, X } from "lucide-react";
+import { PersonFields, emptyDraft } from "@/components/admin/person-fields";
+import { Badge, Button, Input, Select } from "@/components/admin/ui";
+import {
+  type Person,
+  type PersonDraft,
+  type SeatEntry,
+  digitsOf,
+  formatDocument,
+  normalizeName,
+} from "@/lib/admin/schema";
 
 const BOARDING_POINTS = ["Cotia", "Barra Funda", "Tiradentes"];
 
-const fieldClass =
-  "h-12 w-full rounded-xl border-2 border-border-strong bg-background px-4 text-lg text-foreground outline-none transition-colors placeholder:text-muted/60 focus:border-foreground";
+export type SeatSave = {
+  draft: PersonDraft;
+  personId?: string;
+  boarding: string;
+  seat: number;
+  next: boolean;
+};
 
 export function PassengerForm({
   seat,
-  passenger,
+  entry,
+  person,
+  people,
+  seatedIds,
   freeSeats,
   onSave,
   onRemove,
   onClose,
 }: {
   seat: number;
-  passenger?: Passenger;
+  entry?: SeatEntry;
+  person?: Person;
+  people: Person[];
+  /** Quem já está neste ônibus (não aparece nas sugestões). */
+  seatedIds: Set<string>;
   freeSeats: number[];
-  onSave: (data: Passenger, opts: { seat: number; next: boolean }) => void;
+  onSave: (save: SeatSave) => void;
   onRemove: () => void;
   onClose: () => void;
 }) {
-  const [name, setName] = useState(passenger?.name ?? "");
-  const [document, setDocument] = useState(passenger?.document ?? "");
-  const [phone, setPhone] = useState(passenger?.phone ?? "");
-  const [boarding, setBoarding] = useState(passenger?.boarding ?? "");
+  const [draft, setDraft] = useState<PersonDraft>(person ?? emptyDraft);
+  const [linkedId, setLinkedId] = useState<string | undefined>(person?.id);
+  const [boarding, setBoarding] = useState(entry?.boarding ?? "");
   const [targetSeat, setTargetSeat] = useState(seat);
   const [error, setError] = useState("");
+  const boardingRef = useRef<HTMLInputElement>(null);
+
+  const available = useMemo(
+    () => people.filter((p) => !seatedIds.has(p.id)),
+    [people, seatedIds],
+  );
+
+  const suggestions = useMemo(() => {
+    if (linkedId) return [];
+    const query = normalizeName(draft.name);
+    const doc = digitsOf(draft.name);
+    if (query.length < 2) return [];
+    return available
+      .filter(
+        (p) =>
+          normalizeName(p.name).includes(query) ||
+          (doc.length >= 3 && p.document.startsWith(doc)),
+      )
+      .slice(0, 5);
+  }, [available, draft.name, linkedId]);
 
   function submit(next: boolean) {
-    if (!name.trim()) {
+    if (!draft.name.trim()) {
       setError("Preencha o nome do passageiro.");
       return;
     }
-    onSave(
-      {
-        name: name.trim(),
-        document: document.trim(),
-        phone: phone.trim(),
-        boarding: boarding.trim(),
-      },
-      { seat: targetSeat, next },
-    );
+    onSave({ draft, personId: linkedId, boarding, seat: targetSeat, next });
   }
 
   function onSubmit(e: FormEvent) {
@@ -53,6 +84,7 @@ export function PassengerForm({
     submit(false);
   }
 
+  const occupied = Boolean(entry);
   const hasNext = freeSeats.some((s) => s !== seat);
 
   return (
@@ -61,7 +93,7 @@ export function PassengerForm({
         <div className="flex items-center gap-3">
           <span
             className={
-              passenger
+              occupied
                 ? "grid size-14 place-items-center rounded-t-2xl rounded-b-lg border-2 border-zinc-500 bg-zinc-400 font-display text-2xl font-semibold text-white"
                 : "grid size-14 place-items-center rounded-t-2xl rounded-b-lg border-2 border-kairos-yellow-deep bg-kairos-yellow font-display text-2xl font-semibold text-kairos-black"
             }
@@ -73,7 +105,9 @@ export function PassengerForm({
               Poltrona {seat}
             </h3>
             <p className="text-sm text-muted">
-              {passenger ? "Ocupada. Edite ou libere." : "Disponível. Cadastre o passageiro."}
+              {occupied
+                ? "Ocupada. Edite ou libere."
+                : "Disponível. Cadastre ou escolha um passageiro."}
             </p>
           </div>
         </div>
@@ -82,62 +116,85 @@ export function PassengerForm({
         </Button>
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Nome completo</span>
-        <input
-          autoFocus
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setError("");
-          }}
-          autoComplete="off"
-          placeholder="Ex.: Maria da Silva"
-          className={fieldClass}
-          aria-invalid={Boolean(error)}
-        />
-        {error && <span className="text-sm font-medium text-red-600">{error}</span>}
-      </label>
+      {linkedId && !occupied && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm">
+          <Badge tone="success" variant="soft" className="h-7 text-sm">
+            <UserCheck className="size-4" />
+            Passageiro já cadastrado
+          </Badge>
+          <button
+            type="button"
+            className="font-semibold underline underline-offset-2"
+            onClick={() => {
+              setLinkedId(undefined);
+              setDraft(emptyDraft);
+            }}
+          >
+            Trocar
+          </button>
+        </div>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <PersonFields
+        value={draft}
+        onChange={(next) => {
+          setDraft(next);
+          setError("");
+        }}
+        nameError={error}
+        belowName={
+          !linkedId &&
+          (suggestions.length > 0 ? (
+            <ul className="-mt-2 overflow-hidden rounded-xl border-2 border-border-strong bg-background">
+              {suggestions.map((p) => (
+                <li key={p.id} className="border-b border-border last:border-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(p);
+                      setLinkedId(p.id);
+                      setError("");
+                      boardingRef.current?.focus();
+                    }}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface-hover"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-base font-medium">{p.name}</span>
+                      <span className="block text-sm text-muted">
+                        {p.document
+                          ? `${p.docType} ${formatDocument(p.docType, p.document)}`
+                          : "Sem documento"}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold text-accent">Usar</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            !occupied &&
+            available.length > 0 &&
+            draft.name.trim().length < 2 && (
+              <p className="-mt-2 text-sm text-muted">
+                Digite o nome para buscar entre os passageiros já cadastrados (
+                {available.length} {available.length === 1 ? "disponível" : "disponíveis"}).
+              </p>
+            )
+          ))
+        }
+      />
+
+      <div className="flex flex-col gap-1.5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Documento (RG ou CPF)</span>
-          <input
-            value={document}
-            onChange={(e) => setDocument(e.target.value)}
+          <span className="text-sm font-semibold">Local de embarque</span>
+          <Input
+            ref={boardingRef}
+            value={boarding}
+            onChange={(e) => setBoarding(e.target.value)}
             autoComplete="off"
-            inputMode="numeric"
-            className={fieldClass}
+            placeholder="Escolha abaixo ou digite"
           />
         </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold">Telefone</span>
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            autoComplete="off"
-            inputMode="tel"
-            placeholder="(11) 90000-0000"
-            className={fieldClass}
-          />
-        </label>
-      </div>
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">Local de embarque</span>
-        <input
-          value={boarding}
-          onChange={(e) => setBoarding(e.target.value)}
-          list="kairos-boarding"
-          autoComplete="off"
-          placeholder="Escolha ou digite"
-          className={fieldClass}
-        />
-        <datalist id="kairos-boarding">
-          {BOARDING_POINTS.map((p) => (
-            <option key={p} value={p} />
-          ))}
-        </datalist>
         <span className="flex flex-wrap gap-2 pt-1">
           {BOARDING_POINTS.map((p) => (
             <button
@@ -154,15 +211,14 @@ export function PassengerForm({
             </button>
           ))}
         </span>
-      </label>
+      </div>
 
-      {passenger && freeSeats.length > 0 && (
+      {occupied && freeSeats.length > 0 && (
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold">Trocar de poltrona</span>
-          <select
+          <Select
             value={targetSeat}
             onChange={(e) => setTargetSeat(Number(e.target.value))}
-            className={fieldClass}
           >
             <option value={seat}>Manter na {seat}</option>
             {freeSeats.map((s) => (
@@ -170,7 +226,7 @@ export function PassengerForm({
                 Mudar para a {s}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 
@@ -179,7 +235,7 @@ export function PassengerForm({
           <Check />
           Salvar passageiro
         </Button>
-        {!passenger && hasNext && (
+        {!occupied && hasNext && (
           <Button
             type="button"
             variant="outline"
@@ -191,11 +247,11 @@ export function PassengerForm({
             <ArrowRight />
           </Button>
         )}
-        {passenger && (
+        {occupied && (
           <Button
             type="button"
-            variant="ghost"
-            className="w-full text-red-600 hover:bg-red-600/10 hover:text-red-700"
+            variant="destructive"
+            className="w-full"
             onClick={onRemove}
           >
             <Trash2 />
