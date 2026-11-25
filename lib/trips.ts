@@ -66,11 +66,11 @@ export const trips: Trip[] = [
   {
     slug: "rancho-do-ze-joao-30-01",
     destination: "Rancho do Zé João",
-    kind: "Bate-volta de ônibus",
+    kind: "Day use · bate-volta de ônibus",
     date: "30/01",
     weekday: "Sábado",
     summary:
-      "Um dia inteiro de lazer e natureza no rancho, com saída cedo no sábado e tudo organizado para você só aproveitar.",
+      "Um dia inteiro no rancho em Lavrinhas (SP), aos pés da Mantiqueira, com piscinas naturais e rio de serra. Saída cedo no sábado e tudo organizado para você só aproveitar.",
     image: "/viagens/rancho-ze-joao.jpg",
     imageAlt: "Piscina natural de água transparente com deck de madeira, cercada de mata",
     credit: {
@@ -89,7 +89,7 @@ export const trips: Trip[] = [
     deposit: 70,
     whatsappMessage:
       "Olá! Quero reservar minha vaga na viagem para o Rancho do Zé João, sábado 30/01.",
-    banner: "/viagens/rancho-ze-joao-30-01.png",
+    banner: "/viagens/rancho-ze-joao-30-01.jpg",
   },
 ];
 
