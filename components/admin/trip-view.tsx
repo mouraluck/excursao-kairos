@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, FileDown, FileUp, Printer } from "lucide-react";
+import { BusCapture } from "@/components/admin/bus-capture";
 import { BusMap } from "@/components/admin/bus-map";
 import { PassengerForm, type SeatSave } from "@/components/admin/passenger-form";
 import { SidePanel } from "@/components/admin/side-panel";
@@ -218,6 +219,7 @@ export function TripView({
               <FileUp />
               Importar XLSX
             </Button>
+            <BusCapture tripName={trip.name} names={names} />
             <Button onClick={() => window.print()}>
               <Printer />
               Imprimir lista
