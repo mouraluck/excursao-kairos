@@ -29,6 +29,8 @@ export type Trip = {
   /** Mensagem que abre no WhatsApp ao reservar esta viagem. */
   whatsappMessage: string;
   banner?: string;
+  /** Sem vagas: mostra a faixa "Esgotado" e troca a reserva por lista de espera. */
+  soldOut?: boolean;
 };
 
 export const trips: Trip[] = [
@@ -62,6 +64,7 @@ export const trips: Trip[] = [
     whatsappMessage:
       "Olá! Quero reservar minha vaga na viagem para Ilhabela, domingo 29/11.",
     banner: "/viagens/ilhabela-29-11.png",
+    soldOut: true,
   },
   {
     slug: "rancho-do-ze-joao-30-01",

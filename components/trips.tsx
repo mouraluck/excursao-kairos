@@ -58,6 +58,16 @@ export function Trips() {
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
+                {trip.soldOut && (
+                  <div
+                    className="pointer-events-none absolute inset-0 overflow-hidden"
+                    aria-hidden
+                  >
+                    <div className="absolute -right-16 top-10 w-72 rotate-45 bg-red-600 py-2.5 text-center font-display text-xl font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
+                      Esgotado
+                    </div>
+                  </div>
+                )}
                 <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-kairos-yellow px-4 py-2 text-sm font-bold text-kairos-black shadow-lg">
                   <CalendarDays className="size-4" />
                   {trip.weekday}, {trip.date}
@@ -81,6 +91,11 @@ export function Trips() {
               </div>
 
               <div className="flex flex-col gap-6 p-7 sm:p-9">
+                {trip.soldOut && (
+                  <p className="rounded-xl border border-red-600/30 bg-red-600/10 px-4 py-3 text-base font-semibold text-red-700 dark:text-red-400">
+                    Viagem esgotada. Entre na lista de espera e avisamos se abrir vaga.
+                  </p>
+                )}
                 <p className="text-lg text-muted">{trip.summary}</p>
 
                 <div className="grid gap-6 sm:grid-cols-2">
@@ -178,14 +193,23 @@ export function Trips() {
                 </div>
 
                 <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Button asChild size="lg" className="w-full sm:w-auto">
+                  <Button
+                    asChild
+                    size="lg"
+                    variant={trip.soldOut ? "outline" : "default"}
+                    className="w-full sm:w-auto"
+                  >
                     <a
-                      href={whatsappLink(trip.whatsappMessage)}
+                      href={whatsappLink(
+                        trip.soldOut
+                          ? `Olá! Vi que a viagem para ${trip.destination} (${trip.date}) está esgotada. Quero entrar na lista de espera.`
+                          : trip.whatsappMessage,
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       <WhatsAppIcon className="!size-5" />
-                      Reservar minha vaga
+                      {trip.soldOut ? "Entrar na lista de espera" : "Reservar minha vaga"}
                     </a>
                   </Button>
                   {trip.banner && (
