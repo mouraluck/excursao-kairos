@@ -62,7 +62,7 @@ export function Trips() {
                   <CalendarDays className="size-4" />
                   {trip.weekday}, {trip.date}
                 </div>
-                <div className="absolute bottom-5 left-5 right-5 text-white">
+                <div className="absolute bottom-8 left-5 right-5 text-white">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-kairos-yellow">
                     {trip.kind}
                   </p>
