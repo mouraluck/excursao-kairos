@@ -148,7 +148,11 @@ export function Trips() {
                   ) : (
                     <>
                       <p className="text-sm font-medium text-muted">
-                        {trip.price.from ? "Adultos a partir de" : "Por pessoa"}
+                        {trip.price.from
+                          ? "Adultos a partir de"
+                          : trip.price.child
+                            ? "Por adulto"
+                            : "Por pessoa"}
                       </p>
                       <p className="font-display text-4xl font-semibold text-foreground">
                         {formatBRL(trip.price.adult)}

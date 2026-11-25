@@ -4,6 +4,7 @@ import { type FormEvent, useMemo, useRef, useState } from "react";
 import { Check, FileDown, FileUp, Plus, Search, Trash2, X } from "lucide-react";
 import { PersonFields, emptyDraft } from "@/components/admin/person-fields";
 import { SidePanel } from "@/components/admin/side-panel";
+import { useAutosave } from "@/components/admin/use-autosave";
 import { Badge, Button, Input, Notice } from "@/components/admin/ui";
 import {
   type AdminData,
@@ -21,19 +22,38 @@ import type { OnChange } from "@/components/admin/admin-app";
 import { env } from "@/lib/admin/store";
 import { exportPeople, parseSheet } from "@/lib/admin/xlsx";
 
+function draftOf(p: PersonDraft): PersonDraft {
+  return { name: p.name, docType: p.docType, document: p.document, phone: p.phone };
+}
+
 function PersonForm({
   person,
   onSave,
+  onAutosave,
   onDelete,
   onClose,
 }: {
   person?: Person;
   onSave: (draft: PersonDraft) => void;
+  /** Só para quem já está cadastrado: grava sem fechar o formulário. */
+  onAutosave?: (draft: PersonDraft) => void;
   onDelete?: () => void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState<PersonDraft>(person ?? emptyDraft);
+  const [saved, setSaved] = useState<PersonDraft>(person ?? emptyDraft);
   const [error, setError] = useState("");
+
+  const version = JSON.stringify(draftOf(draft));
+  const auto = useAutosave({
+    enabled: Boolean(onAutosave),
+    dirty: Boolean(draft.name.trim()) && version !== JSON.stringify(draftOf(saved)),
+    version,
+    save: () => {
+      onAutosave?.(draft);
+      setSaved(draft);
+    },
+  });
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -41,6 +61,7 @@ function PersonForm({
       setError("Preencha o nome do passageiro.");
       return;
     }
+    auto.finish();
     onSave(draft);
   }
 
@@ -52,8 +73,15 @@ function PersonForm({
             {person ? "Editar passageiro" : "Novo passageiro"}
           </h3>
           <p className="text-sm text-muted">
-            Fica salvo para usar em qualquer viagem.
+            {person
+              ? "As alterações são salvas automaticamente."
+              : "Fica salvo para usar em qualquer viagem."}
           </p>
+          {auto.saved && (
+            <Badge tone="success" dot className="mt-2 h-7 text-sm">
+              Alterações salvas
+            </Badge>
+          )}
         </div>
         <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
           <X />
@@ -77,7 +105,10 @@ function PersonForm({
             type="button"
             variant="destructive"
             className="w-full"
-            onClick={onDelete}
+            onClick={() => {
+              auto.finish();
+              onDelete();
+            }}
           >
             <Trash2 />
             Excluir passageiro
@@ -129,6 +160,12 @@ export function PeoplePage({
     const { people } = upsertPerson(data.people, draft, env, current?.id);
     onChange({ ...data, people });
     setEditing(null);
+  }
+
+  // Grava a edição sem fechar. Ignora se a pessoa já foi excluída.
+  function autosave(personId: string, draft: PersonDraft) {
+    if (!data.people.some((p) => p.id === personId)) return;
+    onChange({ ...data, people: upsertPerson(data.people, draft, env, personId).people });
   }
 
   function remove(person: Person) {
@@ -278,6 +315,7 @@ export function PeoplePage({
                 key={editing}
                 person={current}
                 onSave={save}
+                onAutosave={current ? (draft) => autosave(current.id, draft) : undefined}
                 onDelete={current ? () => remove(current) : undefined}
                 onClose={() => setEditing(null)}
               />

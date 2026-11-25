@@ -7,12 +7,12 @@
 <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 1080px; height: 1350px; overflow: hidden; background: #0a0a0b; }
-  .banner { position: relative; width: 1080px; height: 1350px; overflow: hidden; font-family: Inter, sans-serif; color: #fff; }
-  .photo { position: absolute; inset: 0; background: url(bg.jpg) 42% 50% / cover no-repeat; }
+  html, body { width: 1080px; height: 1080px; overflow: hidden; background: #0a0a0b; }
+  .banner { position: relative; width: 1080px; height: 1080px; overflow: hidden; font-family: Inter, sans-serif; color: #fff; }
+  .photo { position: absolute; inset: 0; background: url(bg.jpg) 62% 100% / auto 128% no-repeat; filter: brightness(1.38) saturate(1.2) contrast(.96); }
   .shade { position: absolute; inset: 0;
     background:
-      linear-gradient(180deg, rgba(10,10,11,.72) 0%, rgba(10,10,11,.35) 30%, rgba(10,10,11,.1) 46%, rgba(10,10,11,.8) 66%, rgba(10,10,11,.96) 100%); }
+      linear-gradient(180deg, rgba(10,10,11,.6) 0%, rgba(10,10,11,.3) 30%, rgba(10,10,11,.05) 50%, rgba(10,10,11,.72) 72%, rgba(10,10,11,.96) 100%); }
   .top { position: absolute; top: 44px; left: 52px; right: 52px; display: flex; align-items: center; justify-content: space-between; }
   .brand { display: flex; align-items: center; gap: 14px; }
   .brand img { width: 64px; height: 64px; border-radius: 50%; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
@@ -20,11 +20,11 @@
   .brand b { color: #fff101; font-weight: 600; }
   .date { background: #fff101; color: #0a0a0b; border-radius: 999px; padding: 14px 26px; font-weight: 800; font-size: 26px; letter-spacing: .02em; box-shadow: 0 10px 30px rgba(0,0,0,.35); display: flex; align-items: center; gap: 12px; }
   .date small { font-weight: 600; font-size: 18px; text-transform: uppercase; letter-spacing: .14em; opacity: .75; }
-  .hero { position: absolute; left: 52px; top: 160px; }
+  .hero { position: absolute; left: 52px; top: 150px; }
   .eyebrow { display: inline-block; font-weight: 700; font-size: 20px; letter-spacing: .22em; text-transform: uppercase; color: #fff101; text-shadow: 0 2px 12px rgba(0,0,0,.6); margin-bottom: 6px; }
-  h1 { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 124px; line-height: .9; letter-spacing: -.035em; text-shadow: 0 12px 40px rgba(0,0,0,.45); }
+  h1 { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 128px; line-height: .9; letter-spacing: -.035em; text-shadow: 0 12px 40px rgba(0,0,0,.45); }
   .sub { margin-top: 18px; font-size: 26px; font-weight: 600; line-height: 1.3; max-width: 560px; text-shadow: 0 2px 12px rgba(0,0,0,.7); }
-  .card { position: absolute; left: 52px; right: 52px; bottom: 150px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card { position: absolute; left: 52px; right: 52px; bottom: 150px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; }
   .box { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 28px; padding: 26px 30px; }
   .box h3 { font-size: 17px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #fff101; margin-bottom: 14px; }
   .dep { display: flex; flex-direction: column; gap: 10px; }
@@ -34,7 +34,7 @@
   .inc { display: flex; flex-wrap: wrap; gap: 9px; }
   .inc span { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 9px 16px; }
   .inc span::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #fff101; flex: none; }
-  .price { margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.2); flex-wrap: wrap; display: flex; align-items: baseline; gap: 10px; }
+  .price { margin-top: 18px; display: flex; align-items: baseline; gap: 10px; }
   .price .from { font-size: 18px; font-weight: 600; opacity: .85; }
   .price .val { font-family: 'Clash Display', Inter, sans-serif; font-weight: 700; font-size: 56px; line-height: 1; color: #fff101; letter-spacing: -.02em; }
   .price .per { font-size: 18px; font-weight: 600; opacity: .85; }
@@ -53,42 +53,38 @@
 
   <div class="top">
     <div class="brand"><img src="logo.svg" alt=""><span>Excursão <b>Kairós</b></span></div>
-    <div class="date"><small>Sáb e dom</small> 19 e 20/12</div>
+    <div class="date"><small>Sábado</small> 30/01</div>
   </div>
 
   <div class="hero">
-    <span class="eyebrow">Fim de semana com hospedagem</span>
-    <h1>São Thomé<br>das Letras</h1>
-    <p class="sub">Cachoeiras, mirantes e ruas de pedra na cidade mística de Minas, com tudo organizado.</p>
+    <span class="eyebrow">Bate-volta de ônibus</span>
+    <h1>Rancho do<br>Zé João</h1>
+    <p class="sub">Um dia inteiro de lazer e natureza, com tudo organizado para você só aproveitar.</p>
   </div>
 
   <div class="card">
     <div class="box">
-      <h3>Saídas na sexta, 18/12</h3>
+      <h3>Saídas no sábado cedo</h3>
       <div class="dep">
-        <div><span>Cotia</span><b>22:00</b></div>
-        <div><span>Barra Funda</span><b>23:00</b></div>
-        <div><span>Tiradentes</span><b>23:30</b></div>
+        <div><span>Cotia</span><b>4:00</b></div>
+        <div><span>Barra Funda</span><b>5:00</b></div>
+        <div><span>Tiradentes</span><b>5:30</b></div>
+        <div><span>Arujá (retorno)</span><b>6:30</b></div>
       </div>
-      <div class="price"><span class="from">adultos a partir de</span><span class="val">R$ 550</span></div>
-      <p class="note">Crianças de 5 a 12 anos acompanhadas: R$ 505<br>Pix ou parcelado no cartão · Sinal de R$ 100</p>
     </div>
     <div class="box">
       <h3>Tudo incluso</h3>
       <div class="inc">
         <span>Ônibus executivo</span>
-        <span>Hospedagem (1 noite)</span>
-        <span>2 cafés da manhã</span>
-        <span>Guia local</span>
-        <span>Transfer para os atrativos</span>
-        <span>Seguro viagem</span>
-        <span>Lanche na ida</span>
-        <span>Sorteio na volta</span>
+        <span>Kit lanche</span>
+        <span>Sorteio de brindes na volta</span>
       </div>
+      <div class="price"><span class="from">por adulto</span><span class="val">R$ 195</span></div>
+      <p class="note">Crianças de 6 a 11 anos: R$ 165<br>Sinal de R$ 70 · Pix ou cartão</p>
     </div>
   </div>
 
-  <div class="credit">Foto: Lucas Pezeta / Pexels</div>
+  <div class="credit">Imagem ilustrativa · Foto: Thiago Zanutim Lucas / Pexels</div>
 
   <div class="cta">
     <span class="l">Garanta sua vaga com a Analice</span>

@@ -4,6 +4,7 @@ import { type FormEvent, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, Trash2, UserCheck, X } from "lucide-react";
 import { PersonFields, emptyDraft } from "@/components/admin/person-fields";
 import { Badge, Button, Input, Select } from "@/components/admin/ui";
+import { useAutosave } from "@/components/admin/use-autosave";
 import {
   type Person,
   type PersonDraft,
@@ -31,6 +32,7 @@ export function PassengerForm({
   seatedIds,
   freeSeats,
   onSave,
+  onAutosave,
   onRemove,
   onClose,
 }: {
@@ -42,6 +44,8 @@ export function PassengerForm({
   seatedIds: Set<string>;
   freeSeats: number[];
   onSave: (save: SeatSave) => void;
+  /** Só para poltrona ocupada: grava a edição sem fechar o formulário. */
+  onAutosave?: (save: { draft: PersonDraft; personId: string; boarding: string }) => void;
   onRemove: () => void;
   onClose: () => void;
 }) {
@@ -71,11 +75,25 @@ export function PassengerForm({
       .slice(0, 5);
   }, [available, draft.name, linkedId]);
 
+  const version = JSON.stringify([draft.name, draft.docType, draft.document, draft.phone, boarding]);
+  const [savedVersion, setSavedVersion] = useState(version);
+  const auto = useAutosave({
+    enabled: Boolean(onAutosave && person),
+    dirty: Boolean(draft.name.trim()) && version !== savedVersion,
+    version,
+    save: () => {
+      if (!person) return;
+      onAutosave?.({ draft, personId: person.id, boarding });
+      setSavedVersion(version);
+    },
+  });
+
   function submit(next: boolean) {
     if (!draft.name.trim()) {
       setError("Preencha o nome do passageiro.");
       return;
     }
+    auto.finish();
     onSave({ draft, personId: linkedId, boarding, seat: targetSeat, next });
   }
 
@@ -106,9 +124,14 @@ export function PassengerForm({
             </h3>
             <p className="text-sm text-muted">
               {occupied
-                ? "Ocupada. Edite ou libere."
+                ? "Ocupada. As alterações são salvas automaticamente."
                 : "Disponível. Cadastre ou escolha um passageiro."}
             </p>
+            {auto.saved && (
+              <Badge tone="success" dot className="mt-2 h-7 text-sm">
+                Alterações salvas
+              </Badge>
+            )}
           </div>
         </div>
         <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
@@ -252,7 +275,10 @@ export function PassengerForm({
             type="button"
             variant="destructive"
             className="w-full"
-            onClick={onRemove}
+            onClick={() => {
+              auto.finish();
+              onRemove();
+            }}
           >
             <Trash2 />
             Liberar poltrona

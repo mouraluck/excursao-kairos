@@ -9,6 +9,7 @@ import { AnimatedNumber, Button, Notice } from "@/components/admin/ui";
 import {
   type AdminData,
   type AdminTrip,
+  type PersonDraft,
   SEAT_COUNT,
   formatDocument,
   formatPhone,
@@ -141,6 +142,20 @@ export function TripView({
     }
   }
 
+  // Edição de poltrona ocupada gravada sem fechar. Ignora se ela já mudou de dono.
+  function autosave(
+    target: number,
+    s: { draft: PersonDraft; personId: string; boarding: string },
+  ) {
+    if (trip.seats[target]?.personId !== s.personId) return;
+    const result = upsertPerson(data.people, s.draft, env, s.personId);
+    const seats = {
+      ...trip.seats,
+      [target]: { personId: s.personId, boarding: s.boarding.trim() },
+    };
+    onChange(withTrip({ ...trip, seats }, result.people));
+  }
+
   function remove() {
     if (seat === null) return;
     const name = names[seat];
@@ -260,6 +275,7 @@ export function TripView({
                   seatedIds={seatedIds}
                   freeSeats={free}
                   onSave={save}
+                  onAutosave={current ? (s) => autosave(seat, s) : undefined}
                   onRemove={remove}
                   onClose={() => setSeat(null)}
                 />
